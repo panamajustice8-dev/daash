@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daash</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#EB1700" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Daash" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseClient = supabase.createClient(
+            'https://apdtibeqntvvcpdswwaa.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZHRpYmVxbnR2dmNwZHN3d2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODkwODYsImV4cCI6MjEwNDQ2NTA4Nn0.rYNjgZsIppF4L5Q5FqUmzQdYn1xTWhu-k3kc2W_v0s0'
+        );
+    </script>
+
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #FFFFFF; color: #191919; margin: 0; overflow: hidden; position: relative; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        #background-animation { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: hidden; }
+        .floating-food { position: absolute; font-size: 50px; opacity: 0.15; animation: floatUp 20s linear infinite; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.2; } 90% { opacity: 0.2; } 100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; } }
+        .landing-container { text-align: center; max-width: 600px; padding: 20px; z-index: 2; background: #FFFFFF; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        .logo { color: #EB1700; font-size: 3rem; font-weight: bold; margin-bottom: 10px; letter-spacing: -1px; }
+        .tagline { color: #767676; margin-bottom: 20px; }
+        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-create { background-color: #EB1700; color: #FFFFFF; box-shadow: 0 4px 10px rgba(235, 23, 0, 0.3); }
+        .btn-create:hover { background-color: #C41200; transform: translateY(-2px); }
+        .btn-login { background-color: transparent; border: 2px solid #EB1700; color: #EB1700; margin-top: 20px; }
+        .btn-login:hover { background-color: #EB1700; color: #FFFFFF; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        .form-group input:focus { border-color: #EB1700; }
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 60px; }
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #EB1700; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .searchable-dropdown { position: relative; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; display: none; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 0; margin: 0; list-style: none; }
+        .dropdown-list li { padding: 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; color: #191919; }
+        .dropdown-list li:hover { background: #f9f9f9; color: #EB1700; }
+        .pending-screen { text-align: center; padding: 30px; }
+        .pending-icon { font-size: 4rem; margin-bottom: 20px; }
+        .pending-business-name { font-size: 1.5rem; font-weight: bold; color: #EB1700; margin-bottom: 5px; }
+        .pending-text { color: #767676; font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
+        .back-btn { background: none; border: none; color: #767676; cursor: pointer; margin-top: 15px; font-size: 14px; text-decoration: underline; }
+        .role-btn { background-color: #FFFFFF; border: 2px solid #EB1700; color: #EB1700; padding: 20px; margin: 10px 0; width: 100%; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .role-btn:hover { background-color: #EB1700; color: #FFFFFF; transform: translateY(-2px); }
+        .remember-forgot { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin: 10px 0 20px 0; color: #767676; }
+        .remember-forgot label { display: flex; align-items: center; gap: 5px; font-weight: normal; }
+        .remember-forgot a { color: #EB1700; text-decoration: none; }
+        .role-login-buttons { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .role-login-btn { flex: 1; background: #FFFFFF; border: 1px solid #ddd; color: #767676; padding: 10px; margin: 0 5px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.3s; }
+        .role-login-btn.active { background: #EB1700; color: #FFFFFF; border-color: #EB1700; }
+        .role-login-btn:hover { border-color: #EB1700; color: #EB1700; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .dashboard-header h2 { color: #EB1700; margin: 0; }
+        .dashboard-header p { color: #767676; font-size: 14px; margin: 0; }
+        .logout-btn { background: none; border: 1px solid #EB1700; color: #EB1700; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+        .logout-btn:hover { background: #EB1700; color: white; }
+        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #191919; text-align: left; }
+        .stats-container { display: flex; gap: 15px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; padding: 15px; text-align: center; }
+        .stat-box h3 { margin: 0; font-size: 2rem; color: #EB1700; }
+        .stat-box p { margin: 5px 0 0 0; font-size: 13px; color: #767676; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; background: #f9f9f9; }
+        .menu-info h4 { margin: 0 0 5px 0; font-size: 16px; }
+        .menu-info p { margin: 0; color: #767676; font-size: 13px; }
+        .menu-info p span { color: #EB1700; font-weight: bold; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #EB1700; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        .status-text { font-size: 12px; font-weight: bold; margin-top: 5px; text-align: right; }
+        .order-card { background: #FFF4E5; border-left: 4px solid #EB1700; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: left; }
+        .order-card h4 { margin: 0 0 5px 0; color: #EB1700; }
+        .order-card p { margin: 3px 0; font-size: 14px; }
+        .wallet-box { background: #FFF4E5; border: 2px solid #EB1700; border-radius: 15px; padding: 20px; margin-bottom: 20px; text-align: center; }
+        .wallet-box h3 { margin: 0; font-size: 2rem; color: #EB1700; }
+        .wallet-box p { margin: 5px 0 0 0; font-size: 14px; color: #767676; }
+        .status-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .status-btn { flex: 1; padding: 10px; border: none; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn-grey { background: #767676; color: white; }
+        .screen { display: none; }
+        #landing-page { display: block; }
+        .upload-box { border: 2px dashed #ddd; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; background: #f9f9f9; }
+        .upload-box img { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 10px; }
+
+        /* CUSTOMER DASHBOARD */
+        .customer-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .customer-tab { flex: 1; padding: 10px; border: none; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; background: #f9f9f9; color: #767676; }
+        .customer-tab.active { background: #EB1700; color: white; }
+        .customer-tab-content { text-align: left; }
+        .product-card { background: #FFFFFF; border: 1px solid #ddd; border-radius: 15px; padding: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .product-image { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+        .product-card h4 { margin: 0 0 5px 0; font-size: 16px; }
+        .product-card p { margin: 0; color: #767676; font-size: 13px; }
+        .product-card .price { color: #EB1700; font-weight: bold; font-size: 16px; margin-top: 5px; }
+        .cart-btn { width: 100%; padding: 15px; background: #EB1700; color: white; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+        /* WHATSAPP STYLE CHAT */
+        .chat-container { height: 350px; overflow-y: auto; background: #e5ddd5; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .chat-message { max-width: 80%; padding: 8px 12px; margin-bottom: 8px; border-radius: 10px; font-size: 14px; word-break: break-word; }
+        .chat-message.customer { background: #dcf8c6; align-self: flex-start; border-top-left-radius: 0; }
+        .chat-message.rider { background: #FFFFFF; align-self: flex-end; border-top-right-radius: 0; }
+        .chat-input-box { display: flex; gap: 10px; }
+        .chat-input-box input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; }
+        .chat-input-box button { background: #EB1700; color: white; border: none; border-radius: 20px; padding: 12px 20px; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+        /* BEAUTIFUL RESTAURANT CARDS */
+        .restaurant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .restaurant-card { background: #FFFFFF; border: 1px solid #eee; border-radius: 15px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: pointer; transition: 0.3s; position: relative; }
+        .restaurant-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .restaurant-card .restaurant-logo { font-size: 3rem; margin-bottom: 10px; }
+        .restaurant-card h4 { margin: 0 0 5px 0; font-size: 16px; font-weight: 800; color: #191919; }
+        .restaurant-card p { margin: 0; font-size: 13px; color: #767676; }
+        .restaurant-card .view-menu-btn { background: #EB1700; color: white; border: none; border-radius: 20px; padding: 8px 15px; margin-top: 10px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; }
+        .favorite-heart { position: absolute; top: 10px; right: 10px; background: white; border: none; font-size: 20px; cursor: pointer; z-index: 10; }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .menu-item-card { background: #FFFFFF; border: 1px solid #eee; border-radius: 15px; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .menu-item-card .product-image { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; background: #f9f9f9; }
+        .menu-item-card h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 800; }
+        .menu-item-card p { margin: 0; font-size: 12px; color: #767676; }
+        .menu-item-card .price { font-size: 16px; font-weight: bold; color: #EB1700; margin-top: 5px; }
+        .menu-item-card .add-cart-btn { background: #EB1700; color: white; border: none; border-radius: 20px; padding: 8px; margin-top: 10px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; }
+
+        /* RIDER DASHBOARD */
+        .rider-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .rider-tab { flex: 1; padding: 10px; border: none; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; background: #f9f9f9; color: #767676; }
+        .rider-tab.active { background: #EB1700; color: white; }
+        .rider-tab-content { text-align: left; }
+        .restaurant-batch-card { background: #FFFFFF; border: 1px solid #ddd; border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .restaurant-batch-card h3 { margin: 0 0 5px 0; color: #EB1700; font-size: 1.5rem; }
+        .restaurant-batch-card p { margin: 5px 0; font-size: 14px; color: #767676; }
+        .accept-batch-btn { background: #28a745; color: white; padding: 15px; border: none; border-radius: 20px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+        .delivery-item { background: #FFFFFF; border: 1px solid #ddd; border-radius: 15px; padding: 15px; margin-bottom: 10px; }
+        .delivery-item h4 { margin: 0 0 5px 0; color: #EB1700; }
+        .delivery-item p { margin: 3px 0; font-size: 14px; }
+
+        /* ADMIN & MERCHANT */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .admin-tab { flex: 1; padding: 10px; border: none; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; background: #f9f9f9; color: #767676; }
+        .admin-tab.active { background: #EB1700; color: white; }
+        .merchant-tab-content { text-align: left; }
+        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; background: #f9f9f9; }
+        .admin-list-item h4 { margin: 0 0 5px 0; font-size: 16px; }
+        .admin-list-item p { margin: 0; color: #767676; font-size: 13px; }
+        .admin-action-btn { padding: 10px 20px; border: none; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; margin-left: 10px; }
+        .approve-btn { background: #28a745; color: white; }
+        .reject-btn { background: #dc3545; color: white; }
+
+        /* CHAT MODAL */
+        .chat-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .chat-modal-overlay.open { display: flex; }
+        .chat-modal { background: #FFFFFF; width: 90%; max-width: 420px; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; max-height: 80vh; }
+        .chat-modal-header { background: #EB1700; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-modal-header h3 { margin: 0; font-size: 16px; }
+        .chat-modal-header button { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .chat-modal .chat-container { border-radius: 0; margin-bottom: 0; flex: 1; }
+        .chat-modal .chat-input-box { padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+
+    <div id="background-animation">
+        <div class="floating-food" style="left: 10%; animation-delay: 0s;">🍕</div>
+        <div class="floating-food" style="left: 20%; animation-delay: 2s;">🍔</div>
+        <div class="floating-food" style="left: 35%; animation-delay: 4s;">🍟</div>
+        <div class="floating-food" style="left: 50%; animation-delay: 6s;">🌮</div>
+        <div class="floating-food" style="left: 65%; animation-delay: 8s;">🥤</div>
+        <div class="floating-food" style="left: 75%; animation-delay: 10s;">🍗</div>
+        <div class="floating-food" style="left: 85%; animation-delay: 12s;">🍩</div>
+        <div class="floating-food" style="left: 90%; animation-delay: 14s;">🍜</div>
+    </div>
+
+    <!-- SCREEN 1: LANDING -->
+    <div id="landing-page" class="landing-container screen">
+        <div class="logo">Daash</div>
+        <div class="tagline">University food delivered to your doorstep.</div>
+        <button class="btn btn-create" onclick="showRoleSelection()">Create Account</button>
+        <button class="btn btn-login" onclick="showLogin()">Login</button>
+    </div>
+
+    <!-- SCREEN 2: ROLE SELECTION -->
+    <div id="role-selection" class="landing-container screen">
+        <h2 style="color: #EB1700;">Who are you?</h2>
+        <p style="color: #767676; font-size: 14px;">Select your role to continue</p>
+        <button class="role-btn" onclick="showCustomerSignup()">🍔 Customer</button>
+        <button class="role-btn" onclick="showMerchantSignup()">🏪 Merchant / Vendor</button>
+        <button class="role-btn" onclick="showRiderSignup()">🛵 Rider</button>
+        <button class="back-btn" onclick="showLanding()">← Back to Home</button>
+    </div>
+
+    <!-- SCREEN 3: CUSTOMER SIGNUP -->
+    <div id="customer-signup" class="landing-container screen" style="text-align: left;">
+        <h2 style="color: #EB1700; text-align: center;">Create Customer Account</h2>
+        <form id="customerForm">
+            <div class="form-group"><label>Full Name</label><input type="text" id="custName" placeholder="e.g. John Doe" required></div>
+            <div class="form-group"><label>Email Address</label><input type="email" id="custEmail" placeholder="e.g. john@university.edu" required></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="custPhone" placeholder="e.g. 0801 234 5678" required></div>
+            <div class="form-group"><label>Password</label><div class="password-wrapper"><input type="password" id="custPassword" placeholder="Minimum 6 characters" required><button type="button" class="toggle-password" onclick="togglePassword('custPassword', this)">Show</button></div></div>
+            <div class="form-group"><label>Select Your University</label><div class="searchable-dropdown"><input type="text" id="schoolSearch" placeholder="Type to search..." onfocus="showList()" oninput="filterSchools()" required><ul class="dropdown-list" id="schoolList"></ul></div><input type="hidden" id="selectedSchool" required></div>
+            <button type="submit" class="btn btn-create">Create Account</button>
+        </form>
+        <button class="back-btn" onclick="showRoleSelection()">← Back</button>
+    </div>
+
+    <!-- SCREEN 4: MERCHANT SIGNUP -->
+    <div id="merchant-signup" class="landing-container screen" style="text-align: left;">
+        <h2 style="color: #EB1700; text-align: center;">Merchant Signup</h2>
+        <form id="merchantForm">
+            <div class="form-group"><label>Business Name</label><input type="text" id="merchBizName" placeholder="e.g. Campus Bites" required></div>
+            <div class="form-group"><label>Owner's Full Name</label><input type="text" id="merchOwner" placeholder="e.g. Mr. Adewale" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="merchEmail" placeholder="e.g. business@email.com" required></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="merchPhone" placeholder="e.g. 0801 234 5678" required></div>
+            <div class="form-group"><label>Password</label><div class="password-wrapper"><input type="password" id="merchPassword" placeholder="Minimum 6 characters" required><button type="button" class="toggle-password" onclick="togglePassword('merchPassword', this)">Show</button></div></div>
+            <div class="form-group"><label>Business Address</label><input type="text" id="merchAddress" placeholder="e.g. Main Cafeteria" required></div>
+            <div class="form-group"><label>Select Your University</label><div class="searchable-dropdown"><input type="text" id="merchSchoolSearch" placeholder="Type to search..." onfocus="showMerchList()" oninput="filterMerchSchools()" required><ul class="dropdown-list" id="merchSchoolList"></ul></div><input type="hidden" id="selectedMerchSchool" required></div>
+            <button type="submit" class="btn btn-create">Request Merchant Account</button>
+        </form>
+        <button class="back-btn" onclick="showRoleSelection()">← Back</button>
+    </div>
+
+    <!-- SCREEN 5: MERCHANT PENDING -->
+    <div id="merchant-pending-screen" class="landing-container screen">
+        <div class="pending-screen">
+            <div class="pending-icon">⏳</div>
+            <p style="color: #767676;">Request Received for:</p>
+            <div class="pending-business-name" id="pendingBizName">Business</div>
+            <div class="pending-text">Your account is pending approval. Please check your email for updates.</div>
+            <button class="btn btn-login" onclick="showLanding()">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 6: RIDER SIGNUP -->
+    <div id="rider-signup" class="landing-container screen" style="text-align: left;">
+        <h2 style="color: #EB1700; text-align: center;">Rider Signup</h2>
+        <form id="riderForm">
+            <div class="form-group"><label>Full Name</label><input type="text" id="riderName" placeholder="e.g. Michael Smith" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="riderEmail" placeholder="e.g. michael@email.com" required></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="riderPhone" placeholder="e.g. 0801 234 5678" required></div>
+            <div class="form-group"><label>Password</label><div class="password-wrapper"><input type="password" id="riderPassword" placeholder="Minimum 6 characters" required><button type="button" class="toggle-password" onclick="togglePassword('riderPassword', this)">Show</button></div></div>
+            <div class="form-group"><label>Select Your University</label><div class="searchable-dropdown"><input type="text" id="riderSchoolSearch" placeholder="Type to search..." onfocus="showRiderList()" oninput="filterRiderSchools()" required><ul class="dropdown-list" id="riderSchoolList"></ul></div><input type="hidden" id="selectedRiderSchool" required></div>
+            <button type="submit" class="btn btn-create">Create Rider Account</button>
+        </form>
+        <button class="back-btn" onclick="showRoleSelection()">← Back</button>
+    </div>
+
+    <!-- SCREEN 7: RIDER PENDING -->
+    <div id="rider-pending-screen" class="landing-container screen">
+        <div class="pending-screen">
+            <div class="pending-icon">🛵</div>
+            <p style="color: #767676;">Request Received for:</p>
+            <div class="pending-business-name" id="pendingRiderName">Rider</div>
+            <div class="pending-text">Your account is pending approval. Please check your email for updates.</div>
+            <button class="btn btn-login" onclick="showLanding()">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 8: LOGIN -->
+    <div id="login-page" class="landing-container screen" style="text-align: left;">
+        <h2 style="color: #EB1700; text-align: center;">Welcome Back</h2>
+        <form id="loginForm">
+            <div class="role-login-buttons">
+                <button type="button" class="role-login-btn active" onclick="setLoginRole(this, 'Customer')">Customer</button>
+                <button type="button" class="role-login-btn" onclick="setLoginRole(this, 'Merchant')">Merchant</button>
+                <button type="button" class="role-login-btn" onclick="setLoginRole(this, 'Rider')">Rider</button>
+            </div>
+            <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="e.g. john@university.edu" required></div>
+            <div class="form-group"><label>Password</label><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Your password" required><button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">Show</button></div></div>
+            <div class="remember-forgot"><label><input type="checkbox"> Remember Me</label><a href="#">Forgot Password?</a></div>
+            <button type="submit" class="btn btn-create">Login</button>
+        </form>
+        <p style="text-align: center; margin-top: 20px; font-size: 14px;">Don't have an account? <a href="#" style="color: #EB1700;" onclick="showRoleSelection()">Sign Up</a></p>
+        <p style="text-align: center; margin-top: 10px; font-size: 11px; color: #aaa;"><a href="#" style="color: #aaa;" onclick="showAdminLogin()">Admin Login</a></p>
+    </div>
+
+    <!-- SCREEN 9: CUSTOMER DASHBOARD -->
+    <div id="customer-dashboard" class="landing-container screen">
+        <div class="dashboard-header"><div><h2>Customer Dashboard</h2><p id="customerSchoolText">ACU</p></div><button class="logout-btn" onclick="showLanding()">Log Out</button></div>
+        <div class="customer-tabs">
+            <button class="customer-tab active" onclick="showCustomerTab('home')">🏠 Home</button>
+            <button class="customer-tab" onclick="showCustomerTab('restaurants')">🏪 Restaurants</button>
+            <button class="customer-tab" onclick="showCustomerTab('cart')">🛒 Cart</button>
+            <button class="customer-tab" onclick="showCustomerTab('orders')">📦 My Orders</button>
+            <button class="customer-tab" onclick="showCustomerTab('history')">📜 History</button>
+            <button class="customer-tab" onclick="showCustomerTab('favorites')">❤️ Favorites</button>
+            <button class="customer-tab" onclick="showCustomerTab('notifications')">🔔 Notifications</button>
+            <button class="customer-tab" onclick="showCustomerTab('support')">💬 Support</button>
+            <button class="customer-tab" onclick="showCustomerTab('profile')">👤 Profile</button>
+        </div>
+        <div id="customer-home-tab" class="customer-tab-content">
+            <div class="section-title">🔎 Search Restaurants</div>
+            <input type="text" id="customerSearch" placeholder="Search for a restaurant or food..." style="width:100%; padding:15px; border:1px solid #ddd; border-radius:30px; margin-bottom:20px;" onkeyup="searchRestaurants()">
+            <div class="section-title">🏪 Restaurants in Your School</div>
+            <div id="customer-restaurants-list" class="restaurant-grid"></div>
+        </div>
+        <div id="customer-restaurants-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">🍔 Menu</div>
+            <div id="customer-menu-list" class="menu-grid"></div>
+        </div>
+        <div id="customer-cart-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">🛒 Your Cart</div>
+            <div id="customer-cart-items"></div>
+            <div class="section-title" style="margin-top:20px;">📍 Delivery Location</div>
+            <div class="form-group"><label>Hostel / Room Number</label><input type="text" id="deliveryAddress" placeholder="e.g. Hall B, Room 204" required></div>
+            <button class="btn btn-create" onclick="placeOrder()">💳 Checkout</button>
+        </div>
+        <div id="customer-orders-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">📦 My Orders</div>
+            <div id="customer-orders-list"></div>
+        </div>
+        <div id="customer-history-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">📜 Order History</div>
+            <div id="customer-history-list"></div>
+        </div>
+        <div id="customer-favorites-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">❤️ My Favorite Restaurants</div>
+            <div id="customer-favorites-list" class="restaurant-grid"></div>
+        </div>
+        <div id="customer-notifications-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">🔔 Notifications</div>
+            <div id="customer-notifications-list"></div>
+        </div>
+        <div id="customer-support-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">💬 Customer Support</div>
+            <div class="form-group"><label>Your Email</label><input type="email" id="supportEmail" placeholder="your@email.com"></div>
+            <div class="form-group"><label>Message</label><input type="text" id="supportMessage" placeholder="How can we help?"></div>
+            <button class="btn btn-create" onclick="sendSupport()">Send Message</button>
+        </div>
+        <div id="customer-profile-tab" class="customer-tab-content" style="display: none;">
+            <div class="section-title">👤 Profile</div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="profileName" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="profileEmail" required></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="profilePhone" required></div>
+            <button class="btn btn-create" onclick="saveCustomerProfile()">Save Profile</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 10: MERCHANT DASHBOARD -->
+    <div id="merchant-dashboard" class="landing-container screen">
+        <div class="dashboard-header">
+            <div>
+                <h2 id="merchant-welcome">Welcome back, Merchant!</h2>
+                <p id="merchant-category">Store Category</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="merchant-status-pill" style="background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">🟢 Open</span>
+                <button class="logout-btn" onclick="showLanding()">Log Out</button>
+            </div>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showMerchantTab('dashboard')">🏠 Dashboard</button>
+            <button class="admin-tab" onclick="showMerchantTab('store')">🏪 My Store</button>
+            <button class="admin-tab" onclick="showMerchantTab('products')">🍔 My Products</button>
+            <button class="admin-tab" onclick="showMerchantTab('orders')">📦 Orders</button>
+            <button class="admin-tab" onclick="showMerchantTab('notifications')">🔔 Notifications</button>
+            <button class="admin-tab" onclick="showMerchantTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="merchant-dashboard-tab" class="merchant-tab-content">
+            <div class="stats-container">
+                <div class="stat-box"><h3 id="dashboard-product-count">0</h3><p>Products Listed</p></div>
+                <div class="stat-box"><h3 id="dashboard-order-count">0</h3><p>Total Orders</p></div>
+                <div class="stat-box"><h3 id="dashboard-store-status">Open</h3><p>Store Status</p></div>
+            </div>
+        </div>
+
+        <!-- 2. MY STORE TAB -->
+        <div id="merchant-store-tab" class="merchant-tab-content" style="display: none;">
+            <div class="section-title">Store Details</div>
+            <form id="storeForm">
+                <div class="form-group"><label>Business Name</label><input type="text" id="storeName" placeholder="e.g. Campus Bites" required></div>
+                <div class="form-group"><label>Business Category</label><select id="storeCategory" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;"><option value="Cafeteria / Restaurant">Cafeteria / Restaurant</option><option value="Supermarket / Provisions">Supermarket / Provisions</option><option value="Barbecue & Grill">Barbecue & Grill</option><option value="Suya Spot">Suya Spot</option><option value="Swallow & Soup">Swallow & Soup</option><option value="Bakery & Pastries">Bakery & Pastries</option><option value="Drinks & Snacks">Drinks & Snacks</option><option value="Other">Other</option></select></div>
+                <div class="form-group"><label>Store Description</label><input type="text" id="storeDescription" placeholder="e.g. We sell fresh food daily" required></div>
+                <div class="form-group"><label>Store Status</label><div style="display: flex; align-items: center; gap: 10px;"><label class="toggle-switch"><input type="checkbox" id="storeStatus" checked onchange="updateStoreStatus()"><span class="slider"></span></label><span id="storeStatusText">Open</span></div></div>
+                <button type="submit" class="btn btn-create">Save Store Details</button>
+            </form>
+        </div>
+
+        <!-- 3. MY PRODUCTS TAB -->
+        <div id="merchant-products-tab" class="merchant-tab-content" style="display: none;">
+            <div class="section-title">Add New Product</div>
+            <form id="addProductForm">
+                <div class="form-group"><label>Product Name</label><input type="text" id="productName" placeholder="e.g. Jollof Rice" required></div>
+                <div class="form-group"><label>Price (₦)</label><input type="number" id="productPrice" placeholder="e.g. 1500" required></div>
+                <div class="form-group"><label>Product Description</label><input type="text" id="productDescription" placeholder="e.g. Spicy, fresh" required></div>
+                <div class="form-group">
+                    <label>Product Photo</label>
+                    <div class="upload-box" onclick="document.getElementById('productPhotoInput').click()">
+                        <p>Click to Upload Photo</p>
+                        <img id="productPhotoPreview" style="display:none;">
+                    </div>
+                    <input type="file" id="productPhotoInput" accept="image/*" style="display:none;" onchange="previewProductPhoto(event)">
+                </div>
+                <button type="submit" class="btn btn-create">Add Product</button>
+            </form>
+            <div class="section-title">Your Products</div>
+            <input type="text" id="productSearch" placeholder="🔍 Search your products..." style="width:100%; padding:15px; border:1px solid #ddd; border-radius:30px; margin-bottom:20px;" onkeyup="searchProducts()">
+            <div id="merchant-products-list"></div>
+        </div>
+
+        <!-- 4. ORDERS TAB -->
+        <div id="merchant-orders-tab" class="merchant-tab-content" style="display: none;">
+            <div class="section-title">Customer Orders</div>
+            <div id="merchant-orders-list"></div>
+        </div>
+
+        <!-- 5. NOTIFICATIONS TAB -->
+        <div id="merchant-notifications-tab" class="merchant-tab-content" style="display: none;">
+            <div class="section-title">Notifications</div>
+            <div class="order-card"><h4>Welcome to Daash!</h4><p>Add your first product to start selling.</p></div>
+        </div>
+
+        <!-- 6. SETTINGS TAB -->
+        <div id="merchant-settings-tab" class="merchant-tab-content" style="display: none;">
+            <div class="section-title">Account Settings</div>
+            <form id="settingsForm">
+                <div class="form-group"><label>Owner Full Name</label><input type="text" id="ownerName" placeholder="e.g. Mr. Adewale" required></div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="ownerEmail" placeholder="e.g. business@email.com" required></div>
+                <div class="form-group"><label>Phone Number</label><input type="tel" id="ownerPhone" placeholder="e.g. 0801 234 5678" required></div>
+                <button type="submit" class="btn btn-create">Save Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCREEN 11: RIDER DASHBOARD -->
+    <div id="rider-dashboard" class="landing-container screen">
+        <div class="dashboard-header"><div><h2>Rider Dashboard</h2><p>ACU</p></div><button class="logout-btn" onclick="showLanding()">Log Out</button></div>
+        <div class="rider-tabs">
+            <button class="rider-tab active" onclick="showRiderTab('requests')">📦 Requests</button>
+            <button class="rider-tab" onclick="showRiderTab('active')">🛵 Active</button>
+            <button class="rider-tab" onclick="showRiderTab('deliveries')">✅ Done</button>
+            <button class="rider-tab" onclick="showRiderTab('earnings')">💰 Earnings</button>
+            <button class="rider-tab" onclick="showRiderTab('history')">📋 History</button>
+            <button class="rider-tab" onclick="showRiderTab('settings')">⚙️ Settings</button>
+        </div>
+        <div id="rider-requests-tab" class="rider-tab-content">
+            <div class="section-title">📦 Delivery Requests</div>
+            <div id="rider-restaurant-batches"></div>
+        </div>
+        <div id="rider-active-tab" class="rider-tab-content" style="display: none;">
+            <div class="section-title">🛵 Active Delivery</div>
+            <div id="rider-active-deliveries"></div>
+        </div>
+        <div id="rider-deliveries-tab" class="rider-tab-content" style="display: none;">
+            <div class="section-title">✅ Completed Deliveries</div>
+            <div id="rider-completed-deliveries"></div>
+        </div>
+        <div id="rider-earnings-tab" class="rider-tab-content" style="display: none;">
+            <div class="stats-container">
+                <div class="stat-box"><h3 id="rider-total-earnings">₦0</h3><p>Total Earnings</p></div>
+                <div class="stat-box"><h3 id="rider-this-week">₦0</h3><p>This Week</p></div>
+                <div class="stat-box"><h3 id="rider-this-month">₦0</h3><p>This Month</p></div>
+            </div>
+            <div class="wallet-box" style="margin-top: 15px;"><h3 id="rider-available">₦0</h3><p>Available for Withdrawal</p></div>
+        </div>
+        <div id="rider-history-tab" class="rider-tab-content" style="display: none;">
+            <div class="section-title">📋 Delivery History</div>
+            <div id="rider-delivery-history"></div>
+        </div>
+        <div id="rider-settings-tab" class="rider-tab-content" style="display: none;">
+            <div class="section-title">⚙️ Settings</div>
+            <form id="riderSettingsForm">
+                <div class="form-group"><label>Full Name</label><input type="text" id="riderNameInput" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="riderEmailInput" required></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="riderPhoneInput" required></div>
+                <button type="submit" class="btn btn-create">Save Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCREEN 12: ADMIN LOGIN -->
+    <div id="admin-login" class="landing-container screen" style="text-align: left;">
+        <h2 style="color: #EB1700; text-align: center;">Admin Login</h2>
+        <form id="adminLoginForm">
+            <div class="form-group"><label>Admin Email</label><input type="email" id="adminEmail" placeholder="sonaceoxxx@gmail.com" required></div>
+            <div class="form-group"><label>Admin Password</label><div class="password-wrapper"><input type="password" id="adminPassword" placeholder="Password" required><button type="button" class="toggle-password" onclick="togglePassword('adminPassword', this)">Show</button></div></div>
+            <button type="submit" class="btn btn-create">Login</button>
+        </form>
+        <button class="back-btn" onclick="showLogin()">← Back</button>
+    </div>
+
+    <!-- SCREEN 13: ADMIN DASHBOARD -->
+    <div id="admin-dashboard" class="landing-container screen">
+        <div class="dashboard-header"><div><h2>Admin Dashboard</h2><p>Full Control</p></div><button class="logout-btn" onclick="showLanding()">Log Out</button></div>
+        
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showAdminTab('overview')">📊 Overview</button>
+            <button class="admin-tab" onclick="showAdminTab('approvals')">✅ Approvals</button>
+            <button class="admin-tab" onclick="showAdminTab('merchants')">🏪 Merchants</button>
+            <button class="admin-tab" onclick="showAdminTab('riders')">🛵 Riders</button>
+            <button class="admin-tab" onclick="showAdminTab('orders')">📦 Orders</button>
+            <button class="admin-tab" onclick="showAdminTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- OVERVIEW -->
+        <div id="admin-overview-tab" class="admin-tab-content">
+            <div class="stats-container">
+                <div class="stat-box"><h3 id="admin-total-revenue">₦0</h3><p>Total Revenue</p></div>
+                <div class="stat-box"><h3 id="admin-total-orders">0</h3><p>Total Orders</p></div>
+                <div class="stat-box"><h3 id="admin-total-customers">0</h3><p>Customers</p></div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-box"><h3 id="admin-total-merchants">0</h3><p>Merchants</p></div>
+                <div class="stat-box"><h3 id="admin-total-riders">0</h3><p>Riders</p></div>
+                <div class="stat-box"><h3 id="admin-total-universities">0</h3><p>Universities</p></div>
+            </div>
+        </div>
+
+        <!-- APPROVALS -->
+        <div id="admin-approvals-tab" class="admin-tab-content" style="display: none;">
+            <div class="section-title">Pending Merchants</div>
+            <div id="pending-merchants-list"></div>
+            <div class="section-title">Pending Riders</div>
+            <div id="pending-riders-list"></div>
+        </div>
+
+        <!-- MERCHANTS -->
+        <div id="admin-merchants-tab" class="admin-tab-content" style="display: none;">
+            <div class="section-title">All Merchants</div>
+            <div id="all-merchants-list"></div>
+        </div>
+
+        <!-- RIDERS -->
+        <div id="admin-riders-tab" class="admin-tab-content" style="display: none;">
+            <div class="section-title">All Riders</div>
+            <div id="all-riders-list"></div>
+        </div>
+
+        <!-- ORDERS -->
+        <div id="admin-orders-tab" class="admin-tab-content" style="display: none;">
+            <div class="section-title">All Orders</div>
+            <div id="all-orders-list"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="admin-settings-tab" class="admin-tab-content" style="display: none;">
+            <div class="section-title">Add University</div>
+            <div class="form-group"><label>University Name</label><input type="text" id="newUniversityName" placeholder="e.g. Landmark University"></div>
+            <button class="btn btn-create" onclick="addUniversity()">Add University</button>
+
+            <div class="section-title">Current Universities</div>
+            <div id="university-list"></div>
+        </div>
+    </div>
+
+    <!-- CHAT MODAL -->
+    <div id="chat-modal-overlay" class="chat-modal-overlay">
+        <div class="chat-modal">
+            <div class="chat-modal-header">
+                <h3 id="chat-modal-title">Chat</h3>
+                <button onclick="closeChatModal()">✕</button>
+            </div>
+            <div class="chat-container" id="chat-modal-messages"></div>
+            <div class="chat-input-box">
+                <input type="text" id="chat-modal-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter'){sendChatModalMessage();}">
+                <button onclick="sendChatModalMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const universities = [
+            "Adekunle Ajasin University", "Afebabalola University", "Ajayi Crowther University", 
+            "American University of Nigeria", "Babcock University", "Baze University", 
+            "Bells University of Technology", "Benson Idahosa University", "Bowen University", 
+            "Caleb University", "Covenant University", "Crawford University", 
+            "Crescent University", "Elizade University", "Fountain University", 
+            "Godfrey Okoye University", "Gregory University", "Igbinedion University", 
+            "Joseph Ayo Babalola University", "Landmark University", "Lead City University", 
+            "Madonna University", "McPherson University", "Mountain Top University", 
+            "Nile University", "Novena University", "Obong University", 
+            "Oduduwa University", "Pan-Atlantic University", "Redeemer's University", 
+            "Renaissance University", "Rhema University", "Ritman University", 
+            "Samuel Adegboyega University", "Southwestern University", "Tansian University", 
+            "Veritas University", "Wesley University", "Western Delta University"
+        ];
+
+        function filterSchools() {
+            const input = document.getElementById('schoolSearch').value.toLowerCase();
+            const list = document.getElementById('schoolList');
+            list.innerHTML = '';
+            const filtered = universities.filter(school => school.toLowerCase().includes(input));
+            filtered.forEach(school => {
+                const li = document.createElement('li');
+                li.textContent = school;
+                li.onclick = function() {
+                    document.getElementById('schoolSearch').value = school;
+                    document.getElementById('selectedSchool').value = school;
+                    list.style.display = 'none';
+                };
+                list.appendChild(li);
+            });
+        }
+
+        function showList() { document.getElementById('schoolList').style.display = 'block'; filterSchools(); }
+
+        function filterMerchSchools() {
+            const input = document.getElementById('merchSchoolSearch').value.toLowerCase();
+            const list = document.getElementById('merchSchoolList');
+            list.innerHTML = '';
+            const filtered = universities.filter(school => school.toLowerCase().includes(input));
+            filtered.forEach(school => {
+                const li = document.createElement('li');
+                li.textContent = school;
+                li.onclick = function() {
+                    document.getElementById('merchSchoolSearch').value = school;
+                    document.getElementById('selectedMerchSchool').value = school;
+                    list.style.display = 'none';
+                };
+                list.appendChild(li);
+            });
+        }
+
+        function showMerchList() { document.getElementById('merchSchoolList').style.display = 'block'; filterMerchSchools(); }
+
+        function filterRiderSchools() {
+            const input = document.getElementById('riderSchoolSearch').value.toLowerCase();
+            const list = document.getElementById('riderSchoolList');
+            list.innerHTML = '';
+            const filtered = universities.filter(school => school.toLowerCase().includes(input));
+            filtered.forEach(school => {
+                const li = document.createElement('li');
+                li.textContent = school;
+                li.onclick = function() {
+                    document.getElementById('riderSchoolSearch').value = school;
+                    document.getElementById('selectedRiderSchool').value = school;
+                    list.style.display = 'none';
+                };
+                list.appendChild(li);
+            });
+        }
+
+        function showRiderList() { document.getElementById('riderSchoolList').style.display = 'block'; filterRiderSchools(); }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.searchable-dropdown')) {
+                document.getElementById('schoolList').style.display = 'none';
+                document.getElementById('merchSchoolList').style.display = 'none';
+                document.getElementById('riderSchoolList').style.display = 'none';
+            }
+        });
+
+        function togglePassword(inputId, btn) {
+            const passwordInput = document.getElementById(inputId);
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        let currentLoginRole = 'Customer';
+        let currentCustomerId = null;
+        let currentMerchantId = null;
+        let currentRiderId = null;
+        let currentCustomerSchool = '';
+        let currentRestaurantId = null;
+        let currentRestaurantName = '';
+        let cart = [];
+        let allRestaurants = [];
+        let allProducts = [];
+        let currentChatCustomerId = null;
+        let currentChatOrderId = null;
+
+        function setLoginRole(btn, role) {
+            currentLoginRole = role;
+            document.querySelectorAll('.role-login-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        document.getElementById('customerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const full_name = document.getElementById('custName').value;
+            const email = document.getElementById('custEmail').value;
+            const phone = document.getElementById('custPhone').value;
+            const password = document.getElementById('custPassword').value;
+            const university = document.getElementById('selectedSchool').value;
+            if (!university) { alert("Please select a university!"); return; }
+            const { error } = await supabaseClient.from('customers').insert([{ full_name, email, phone, password, university }]);
+            if (error) { alert("Error: " + error.message); }
+            else { alert("Account created!"); showLogin(); }
+        });
+
+        document.getElementById('merchantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const business_name = document.getElementById('merchBizName').value;
+            const owner_name = document.getElementById('merchOwner').value;
+            const email = document.getElementById('merchEmail').value;
+            const phone = document.getElementById('merchPhone').value;
+            const password = document.getElementById('merchPassword').value;
+            const address = document.getElementById('merchAddress').value;
+            const university = document.getElementById('selectedMerchSchool').value;
+            if (!university) { alert("Please select a university!"); return; }
+            const { error } = await supabaseClient.from('merchants').insert([{ business_name, owner_name, email, phone, password, address, university, status: 'pending' }]);
+            if (error) { alert("Error: " + error.message); }
+            else {
+                document.getElementById('pendingBizName').textContent = business_name;
+                show('merchant-pending-screen');
+            }
+        });
+
+        document.getElementById('riderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const full_name = document.getElementById('riderName').value;
+            const email = document.getElementById('riderEmail').value;
+            const phone = document.getElementById('riderPhone').value;
+            const password = document.getElementById('riderPassword').value;
+            const university = document.getElementById('selectedRiderSchool').value;
+            if (!university) { alert("Please select a university!"); return; }
+            const { error } = await supabaseClient.from('riders').insert([{ full_name, email, phone, password, university, status: 'pending' }]);
+            if (error) { alert("Error: " + error.message); }
+            else {
+                document.getElementById('pendingRiderName').textContent = full_name;
+                show('rider-pending-screen');
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { alert("Please enter email and password!"); return; }
+            if (currentLoginRole === 'Merchant') {
+                const { data, error } = await supabaseClient.from('merchants').select('*').eq('email', email).eq('password', password).single();
+                if (error || !data) { alert("Invalid email or password!"); }
+                else if (data.status === 'pending') { alert("Account still pending approval!"); }
+                else { currentMerchantId = data.id; loadMerchantData(data); show('merchant-dashboard'); }
+            } else if (currentLoginRole === 'Customer') {
+                const { data, error } = await supabaseClient.from('customers').select('*').eq('email', email).eq('password', password).single();
+                if (error || !data) { alert("Invalid email or password!"); }
+                else { currentCustomerId = data.id; currentCustomerSchool = data.university; document.getElementById('customerSchoolText').textContent = currentCustomerSchool; loadCustomerRestaurants(); loadCustomerOrders(); loadCustomerHistory(); loadCustomerFavorites(); loadCustomerNotifications(); loadCustomerProfile(data); show('customer-dashboard'); }
+            } else if (currentLoginRole === 'Rider') {
+                const { data, error } = await supabaseClient.from('riders').select('*').eq('email', email).eq('password', password).single();
+                if (error || !data) { alert("Invalid email or password!"); }
+                else if (data.status === 'pending') { alert("Account still pending approval!"); }
+                else { currentRiderId = data.id; loadRiderDeliveryRequests(); loadRiderActiveDeliveries(); loadRiderDeliveries(); loadRiderEarnings(); loadRiderDeliveryHistory(); show('rider-dashboard'); }
+            }
+        });
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const { data, error } = await supabaseClient.from('admins').select('*').eq('email', email).eq('password', password).single();
+            if (error || !data) { alert("Invalid Admin credentials!"); }
+            else { alert("Welcome Admin!"); show('admin-dashboard'); loadAdminData(); }
+        });
+
+        // ===== ADMIN FUNCTIONS =====
+        function showAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab-content').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('admin-' + tabName + '-tab').style.display = 'block';
+            document.querySelector(`.admin-tab:nth-child(${['overview','approvals','merchants','riders','orders','settings'].indexOf(tabName) + 1})`).classList.add('active');
+            if (tabName === 'approvals') { loadPendingUsers(); }
+            else if (tabName === 'merchants') { loadAllMerchants(); }
+            else if (tabName === 'riders') { loadAllRiders(); }
+            else if (tabName === 'orders') { loadAllOrders(); }
+            else if (tabName === 'settings') { loadUniversityList(); }
+        }
+
+        async function loadAdminData() {
+            const [{ data: orders }, { data: customers }, { data: merchants }, { data: riders }, { data: universities }] = await Promise.all([
+                supabaseClient.from('orders').select('*'),
+                supabaseClient.from('customers').select('*'),
+                supabaseClient.from('merchants').select('*'),
+                supabaseClient.from('riders').select('*'),
+                supabaseClient.from('universities').select('*')
+            ]);
+
+            let totalRevenue = 0;
+            if (orders) { orders.forEach(o => totalRevenue += Number(o.total_price) || 0); }
+            
+            document.getElementById('admin-total-revenue').textContent = '₦' + totalRevenue;
+            document.getElementById('admin-total-orders').textContent = orders ? orders.length : 0;
+            document.getElementById('admin-total-customers').textContent = customers ? customers.length : 0;
+            document.getElementById('admin-total-merchants').textContent = merchants ? merchants.length : 0;
+            document.getElementById('admin-total-riders').textContent = riders ? riders.length : 0;
+            document.getElementById('admin-total-universities').textContent = universities ? universities.length : 0;
+        }
+
+        async function loadPendingUsers() {
+            const { data: merchants, error: merchErr } = await supabaseClient.from('merchants').select('*').eq('status', 'pending');
+            const { data: riders, error: riderErr } = await supabaseClient.from('riders').select('*').eq('status', 'pending');
+            const merchList = document.getElementById('pending-merchants-list');
+            merchList.innerHTML = '';
+            merchants.forEach(merchant => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `<div><h4>${merchant.business_name}</h4><p>${merchant.email} | ${merchant.university}</p></div><div><button class="admin-action-btn approve-btn" onclick="approveMerchant(${merchant.id})">Approve</button><button class="admin-action-btn reject-btn" onclick="rejectMerchant(${merchant.id})">Reject</button></div>`;
+                merchList.appendChild(item);
+            });
+            const riderList = document.getElementById('pending-riders-list');
+            riderList.innerHTML = '';
+            riders.forEach(rider => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `<div><h4>${rider.full_name}</h4><p>${rider.email} | ${rider.university}</p></div><div><button class="admin-action-btn approve-btn" onclick="approveRider(${rider.id})">Approve</button><button class="admin-action-btn reject-btn" onclick="rejectRider(${rider.id})">Reject</button></div>`;
+                riderList.appendChild(item);
+            });
+        }
+
+        async function approveMerchant(id) { await supabaseClient.from('merchants').update({ status: 'approved' }).eq('id', id); loadPendingUsers(); loadAdminData(); }
+        async function rejectMerchant(id) { await supabaseClient.from('merchants').update({ status: 'rejected' }).eq('id', id); loadPendingUsers(); loadAdminData(); }
+        async function approveRider(id) { await supabaseClient.from('riders').update({ status: 'approved' }).eq('id', id); loadPendingUsers(); loadAdminData(); }
+        async function rejectRider(id) { await supabaseClient.from('riders').update({ status: 'rejected' }).eq('id', id); loadPendingUsers(); loadAdminData(); }
+
+        async function loadAllMerchants() {
+            const { data: merchants, error } = await supabaseClient.from('merchants').select('*');
+            const list = document.getElementById('all-merchants-list');
+            list.innerHTML = '';
+            if (!merchants || merchants.length === 0) { list.innerHTML = '<p style="color:#767676;">No merchants yet.</p>'; return; }
+            merchants.forEach(merchant => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `<div><h4>${merchant.business_name}</h4><p>${merchant.email} | ${merchant.university}</p><p>Status: ${merchant.status}</p></div>`;
+                list.appendChild(item);
+            });
+        }
+
+        async function loadAllRiders() {
+            const { data: riders, error } = await supabaseClient.from('riders').select('*');
+            const list = document.getElementById('all-riders-list');
+            list.innerHTML = '';
+            if (!riders || riders.length === 0) { list.innerHTML = '<p style="color:#767676;">No riders yet.</p>'; return; }
+            riders.forEach(rider => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `<div><h4>${rider.full_name}</h4><p>${rider.email} | ${rider.university}</p><p>Status: ${rider.status}</p></div>`;
+                list.appendChild(item);
+            });
+        }
+
+        async function loadAllOrders() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').order('id', { ascending: false });
+            const list = document.getElementById('all-orders-list');
+            list.innerHTML = '';
+            if (!orders || orders.length === 0) { list.innerHTML = '<p style="color:#767676;">No orders yet.</p>'; return; }
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'order-card';
+                item.innerHTML = `<h4>Order #${order.id}</h4><p><strong>Restaurant:</strong> ${order.restaurant_name || 'Unknown'}</p><p><strong>Items:</strong> ${order.items_ordered}</p><p><strong>Total:</strong> ₦${order.total_price}</p><p><strong>Status:</strong> ${order.order_status}</p>`;
+                list.appendChild(item);
+            });
+        }
+
+        async function loadUniversityList() {
+            const { data: unis, error } = await supabaseClient.from('universities').select('*');
+            const list = document.getElementById('university-list');
+            list.innerHTML = '';
+            (unis || []).forEach(uni => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `<div><h4>${uni.name}</h4></div><button class="admin-action-btn reject-btn" onclick="removeUniversity(${uni.id})">Remove</button>`;
+                list.appendChild(item);
+            });
+        }
+
+        async function addUniversity() {
+            const name = document.getElementById('newUniversityName').value;
+            if (!name) return;
+            const { error } = await supabaseClient.from('universities').insert([{ name }]);
+            if (error) { alert("Error: " + error.message); }
+            else { alert("University added!"); loadUniversityList(); loadAdminData(); document.getElementById('newUniversityName').value = ''; }
+        }
+
+        async function removeUniversity(id) {
+            await supabaseClient.from('universities').delete().eq('id', id);
+            loadUniversityList(); loadAdminData();
+        }
+
+        // ===== CUSTOMER FUNCTIONS =====
+        function showCustomerTab(tabName) {
+            document.querySelectorAll('.customer-tab-content').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.customer-tab').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('customer-' + tabName + '-tab').style.display = 'block';
+            document.querySelector(`.customer-tab:nth-child(${['home','restaurants','cart','orders','history','favorites','notifications','support','profile'].indexOf(tabName) + 1})`).classList.add('active');
+            if (tabName === 'orders') { loadCustomerOrders(); }
+            else if (tabName === 'history') { loadCustomerHistory(); }
+            else if (tabName === 'favorites') { loadCustomerFavorites(); }
+            else if (tabName === 'home') { loadCustomerRestaurants(); }
+            else if (tabName === 'cart') { displayCart(); }
+            else if (tabName === 'notifications') { loadCustomerNotifications(); }
+        }
+
+        async function loadCustomerRestaurants() {
+            const { data: merchants, error } = await supabaseClient.from('merchants').select('*').eq('university', currentCustomerSchool).eq('status', 'approved');
+            allRestaurants = merchants;
+            const productList = document.getElementById('customer-restaurants-list');
+            productList.innerHTML = '';
+            merchants.forEach(merchant => {
+                const item = document.createElement('div');
+                item.className = 'restaurant-card';
+                item.innerHTML = `<button class="favorite-heart" onclick="favoriteRestaurant(${merchant.id})">♡</button><div class="restaurant-logo">🏪</div><h4>${merchant.business_name}</h4><p>${merchant.category || ''}</p><button class="view-menu-btn" onclick="viewRestaurantMenu(${merchant.id})">View Menu</button>`;
+                productList.appendChild(item);
+            });
+        }
+
+        function searchRestaurants() {
+            const searchTerm = document.getElementById('customerSearch').value.toLowerCase();
+            const productList = document.getElementById('customer-restaurants-list');
+            productList.innerHTML = '';
+            const filtered = allRestaurants.filter(merchant => merchant.business_name.toLowerCase().includes(searchTerm));
+            filtered.forEach(merchant => {
+                const item = document.createElement('div');
+                item.className = 'restaurant-card';
+                item.innerHTML = `<button class="favorite-heart" onclick="favoriteRestaurant(${merchant.id})">♡</button><div class="restaurant-logo">🏪</div><h4>${merchant.business_name}</h4><p>${merchant.category || ''}</p><button class="view-menu-btn" onclick="viewRestaurantMenu(${merchant.id})">View Menu</button>`;
+                productList.appendChild(item);
+            });
+        }
+
+        async function favoriteRestaurant(merchantId) {
+            const { data: existing, error: checkErr } = await supabaseClient.from('favorites').select('*').eq('customer_id', currentCustomerId).eq('merchant_id', merchantId);
+            if (existing && existing.length > 0) {
+                alert("Already in favorites!");
+                return;
+            }
+            const { error } = await supabaseClient.from('favorites').insert([
+                { customer_id: currentCustomerId, merchant_id: merchantId }
+            ]);
+            if (error) { alert("Error favoriting: " + error.message); }
+            else { alert("Restaurant added to favorites!"); loadCustomerFavorites(); }
+        }
+
+        async function loadCustomerFavorites() {
+            const { data: favorites, error } = await supabaseClient.from('favorites').select('*').eq('customer_id', currentCustomerId);
+            const favList = document.getElementById('customer-favorites-list');
+            favList.innerHTML = '';
+            if (!favorites || favorites.length === 0) { favList.innerHTML = '<p style="color:#767676;">No favorites yet.</p>'; return; }
+            for (const fav of favorites) {
+                const { data: merchant } = await supabaseClient.from('merchants').select('*').eq('id', fav.merchant_id).single();
+                if (!merchant) continue;
+                const item = document.createElement('div');
+                item.className = 'restaurant-card';
+                item.innerHTML = `<button class="favorite-heart" title="Remove from favorites" onclick="removeFavorite(${fav.id})">🗑️</button><div class="restaurant-logo">🏪</div><h4>${merchant.business_name}</h4><p>${merchant.category || ''}</p><button class="view-menu-btn" onclick="viewRestaurantMenu(${merchant.id})">View Menu</button>`;
+                favList.appendChild(item);
+            }
+        }
+
+        async function removeFavorite(favoriteId) {
+            const { error } = await supabaseClient.from('favorites').delete().eq('id', favoriteId);
+            if (error) { alert("Error removing favorite: " + error.message); }
+            else { loadCustomerFavorites(); }
+        }
+
+        async function viewRestaurantMenu(merchantId) {
+            const { data: merchant } = await supabaseClient.from('merchants').select('*').eq('id', merchantId).single();
+            currentRestaurantId = merchantId;
+            currentRestaurantName = merchant.business_name;
+            
+            const { data: products, error } = await supabaseClient.from('products').select('*').eq('merchant_id', merchantId).eq('is_available', true);
+            const menuList = document.getElementById('customer-menu-list');
+            menuList.innerHTML = '';
+            products.forEach(product => {
+                const item = document.createElement('div');
+                item.className = 'menu-item-card';
+                item.innerHTML = `<div class="product-image">🍔</div><h4>${product.product_name}</h4><p>${product.description || ''}</p><p class="price">₦${product.price}</p><button class="add-cart-btn" onclick="addToCart(${product.id}, '${product.product_name}', ${product.price})">Add to Cart</button>`;
+                menuList.appendChild(item);
+            });
+            showCustomerTab('restaurants');
+        }
+
+        function addToCart(productId, name, price) {
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ productId, name, price, merchantId: currentRestaurantId, quantity: 1 });
+            }
+            alert(name + ' added to cart!');
+            displayCart();
+        }
+
+        function updateQuantity(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
+            displayCart();
+        }
+
+        function displayCart() {
+            const cartDiv = document.getElementById('customer-cart-items');
+            cartDiv.innerHTML = '';
+            if (cart.length === 0) { cartDiv.innerHTML = '<p style="color:#767676;">Your cart is empty.</p>'; return; }
+            cart.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.innerHTML = `<div><h4 style="margin:0;">${item.name}</h4><p style="margin:0; font-size:13px; color:#767676;">₦${item.price} x ${item.quantity}</p></div><div style="display:flex; gap:5px; align-items:center;"><button class="admin-action-btn reject-btn" onclick="updateQuantity(${index}, -1)">-</button><span>${item.quantity}</span><button class="admin-action-btn approve-btn" onclick="updateQuantity(${index}, 1)">+</button></div>`;
+                cartDiv.appendChild(itemDiv);
+            });
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            displayCart();
+        }
+
+        async function placeOrder() {
+            if (cart.length === 0) { alert("Your cart is empty!"); return; }
+            const delivery_address = document.getElementById('deliveryAddress').value;
+            if (!delivery_address) { alert("Please enter your delivery location!"); return; }
+            const items_ordered = cart.map(item => `${item.name} x${item.quantity}`).join(', ');
+            const total_price = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const { error } = await supabaseClient.from('orders').insert([{
+                customer_id: currentCustomerId,
+                merchant_id: currentRestaurantId,
+                restaurant_name: currentRestaurantName,
+                delivery_address: delivery_address,
+                items_ordered: items_ordered,
+                total_price: total_price,
+                order_status: 'pending'
+            }]);
+            if (error) { alert("Error placing order: " + error.message); }
+            else {
+                alert("Order placed successfully!");
+                cart = [];
+                displayCart();
+                showCustomerTab('orders');
+            }
+        }
+
+        async function loadCustomerOrders() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('customer_id', currentCustomerId).order('id', { ascending: false });
+            const orderList = document.getElementById('customer-orders-list');
+            orderList.innerHTML = '';
+            const activeOrders = (orders || []).filter(o => !(o.order_status === 'delivered' && o.customer_confirmed));
+            if (activeOrders.length === 0) { orderList.innerHTML = '<p style="color:#767676;">No active orders. Check History for past orders.</p>'; }
+            else {
+                activeOrders.forEach(order => {
+                    const item = document.createElement('div');
+                    item.className = 'order-card';
+                    let statusText = order.order_status === 'delivered' ? 'Delivered - Confirm Received' : order.order_status;
+                    item.innerHTML = `<h4>Order #${order.id}</h4><p>${order.items_ordered}</p><p style="color:#EB1700; font-weight:bold;">Total: ₦${order.total_price}</p><p><strong>Status:</strong> ${statusText}</p>`;
+                    if (order.rider_id) {
+                        const msgBtn = document.createElement('button');
+                        msgBtn.className = 'btn btn-create';
+                        msgBtn.style.marginTop = '10px';
+                        msgBtn.textContent = '💬 Message Rider';
+                        msgBtn.onclick = function() { openChatModal('customer', order.id, order.rider_id); };
+                        item.appendChild(msgBtn);
+                    }
+                    if (order.order_status === 'delivered' && !order.customer_confirmed) {
+                        const confirmBtn = document.createElement('button');
+                        confirmBtn.className = 'btn btn-create';
+                        confirmBtn.style.marginTop = '10px';
+                        confirmBtn.style.background = '#28a745';
+                        confirmBtn.textContent = '✅ Confirm Received';
+                        confirmBtn.onclick = function() { confirmOrder(order.id); };
+                        item.appendChild(confirmBtn);
+                    }
+                    orderList.appendChild(item);
+                });
+            }
+        }
+
+        async function loadCustomerHistory() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('customer_id', currentCustomerId).eq('order_status', 'delivered').eq('customer_confirmed', true).order('id', { ascending: false });
+            const historyList = document.getElementById('customer-history-list');
+            historyList.innerHTML = '';
+            if (!orders || orders.length === 0) { historyList.innerHTML = '<p style="color:#767676;">No completed orders yet.</p>'; return; }
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'order-card';
+                item.innerHTML = `<h4>Order #${order.id}</h4><p>${order.items_ordered}</p><p style="color:#EB1700; font-weight:bold;">Total: ₦${order.total_price}</p><p><strong>Status:</strong> ✅ Completed</p>`;
+                historyList.appendChild(item);
+            });
+        }
+
+        async function confirmOrder(orderId) {
+            const { error } = await supabaseClient.from('orders').update({ customer_confirmed: true }).eq('id', orderId);
+            if (error) { alert("Error: " + error.message); }
+            else { alert("Order confirmed! You can find it in your History tab."); loadCustomerOrders(); }
+        }
+
+        async function loadCustomerNotifications() {
+            const notifList = document.getElementById('customer-notifications-list');
+            notifList.innerHTML = '<div class="order-card"><h4>Welcome!</h4><p>Order food from your favorite restaurants!</p></div>';
+        }
+
+        async function loadCustomerProfile(customer) {
+            document.getElementById('profileName').value = customer.full_name;
+            document.getElementById('profileEmail').value = customer.email;
+            document.getElementById('profilePhone').value = customer.phone;
+        }
+
+        async function saveCustomerProfile() {
+            const full_name = document.getElementById('profileName').value;
+            const email = document.getElementById('profileEmail').value;
+            const phone = document.getElementById('profilePhone').value;
+            const { error } = await supabaseClient.from('customers').update({ full_name, email, phone }).eq('id', currentCustomerId);
+            if (error) { alert("Error: " + error.message); }
+            else { alert("Profile saved!"); }
+        }
+
+        async function sendSupport() {
+            alert("Message sent! We'll get back to you soon.");
+        }
+
+        // ===== MERCHANT FUNCTIONS =====
+        function showMerchantTab(tabName) {
+            document.querySelectorAll('.merchant-tab-content').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('merchant-' + tabName + '-tab').style.display = 'block';
+            document.querySelector(`.admin-tab:nth-child(${['dashboard','store','products','orders','notifications','settings'].indexOf(tabName) + 1})`).classList.add('active');
+            if (tabName === 'orders' && currentMerchantId) { loadMerchantOrders(currentMerchantId); }
+            else if (tabName === 'products' && currentMerchantId) { loadMerchantProducts(currentMerchantId); }
+            else if (tabName === 'dashboard' && currentMerchantId) { loadMerchantOrders(currentMerchantId); loadMerchantProducts(currentMerchantId); }
+        }
+
+        async function loadMerchantData(merchant) {
+            document.getElementById('merchant-welcome').textContent = 'Welcome back, ' + merchant.owner_name + '!';
+            document.getElementById('merchant-category').textContent = merchant.category || 'No category set';
+            document.getElementById('storeName').value = merchant.business_name;
+            document.getElementById('ownerName').value = merchant.owner_name;
+            document.getElementById('ownerEmail').value = merchant.email;
+            document.getElementById('ownerPhone').value = merchant.phone;
+            if (merchant.is_store_open !== false) { document.getElementById('storeStatus').checked = true; document.getElementById('storeStatusText').textContent = 'Open'; document.getElementById('merchant-status-pill').textContent = '🟢 Open'; }
+            else { document.getElementById('storeStatus').checked = false; document.getElementById('storeStatusText').textContent = 'Closed'; document.getElementById('merchant-status-pill').textContent = '🔴 Closed'; }
+            await loadMerchantProducts(merchant.id);
+            await loadMerchantOrders(merchant.id);
+        }
+
+        async function loadMerchantProducts(merchantId) {
+            const { data: products, error } = await supabaseClient.from('products').select('*').eq('merchant_id', merchantId);
+            allProducts = products;
+            const productList = document.getElementById('merchant-products-list');
+            productList.innerHTML = '';
+            document.getElementById('dashboard-product-count').textContent = products.length;
+            products.forEach(product => {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.innerHTML = `<div><h4 style="margin:0;">${product.product_name}</h4><p style="margin:0; font-size:13px; color:#767676;">₦${product.price}</p></div><div><label class="toggle-switch"><input type="checkbox" ${product.is_available ? 'checked' : ''} onchange="toggleProduct(${product.id}, this.checked)"><span class="slider"></span></label><button class="admin-action-btn reject-btn" onclick="deleteProduct(${product.id})">Delete</button></div>`;
+                productList.appendChild(item);
+            });
+        }
+
+        async function loadMerchantOrders(merchantId) {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('merchant_id', merchantId).order('id', { ascending: false });
+            const orderList = document.getElementById('merchant-orders-list');
+            orderList.innerHTML = '';
+            document.getElementById('dashboard-order-count').textContent = orders.length;
+            if (orders.length === 0) { orderList.innerHTML = '<p style="color:#767676;">New customer orders will appear here.</p>'; }
+            else {
+                orders.forEach(order => {
+                    const item = document.createElement('div');
+                    item.className = 'order-card';
+                    item.innerHTML = `<h4>New Order #${order.id}</h4><p><strong>Hostel:</strong> ${order.delivery_address}</p><p><strong>Items:</strong> ${order.items_ordered}</p><p style="color:#EB1700; font-weight:bold;">Total: ₦${order.total_price}</p><p><strong>Status:</strong> ${order.order_status}</p>`;
+                    orderList.appendChild(item);
+                });
+            }
+        }
+
+        async function toggleProduct(id, isAvailable) { await supabaseClient.from('products').update({ is_available: isAvailable }).eq('id', id); loadMerchantProducts(currentMerchantId); }
+        async function deleteProduct(id) { await supabaseClient.from('products').delete().eq('id', id); loadMerchantProducts(currentMerchantId); }
+
+        function searchProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const productList = document.getElementById('merchant-products-list');
+            productList.innerHTML = '';
+            const filtered = allProducts.filter(product => product.product_name.toLowerCase().includes(searchTerm));
+            filtered.forEach(product => {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.innerHTML = `<div><h4 style="margin:0;">${product.product_name}</h4><p style="margin:0; font-size:13px; color:#767676;">₦${product.price}</p></div><div><label class="toggle-switch"><input type="checkbox" ${product.is_available ? 'checked' : ''} onchange="toggleProduct(${product.id}, this.checked)"><span class="slider"></span></label><button class="admin-action-btn reject-btn" onclick="deleteProduct(${product.id})">Delete</button></div>`;
+                productList.appendChild(item);
+            });
+        }
+
+        async function previewProductPhoto(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('productPhotoPreview').src = e.target.result; document.getElementById('productPhotoPreview').style.display = 'block'; };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadProductPhoto(file) {
+            const fileName = `${Date.now()}_${file.name}`;
+            const { error } = await supabaseClient.storage.from('Product photo').upload(fileName, file);
+            if (error) { alert("Error uploading photo: " + error.message); return null; }
+            const { data: publicURL } = supabaseClient.storage.from('Product photo').getPublicUrl(fileName);
+            return publicURL.publicUrl;
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const product_name = document.getElementById('productName').value;
+            const price = document.getElementById('productPrice').value;
+            const description = document.getElementById('productDescription').value;
+            const fileInput = document.getElementById('productPhotoInput');
+            let photo_url = '';
+            if (fileInput.files.length > 0) { photo_url = await uploadProductPhoto(fileInput.files[0]); }
+            const { error } = await supabaseClient.from('products').insert([{ merchant_id: currentMerchantId, product_name, price, description, photo_url }]);
+            if (error) { alert("Error adding product: " + error.message); }
+            else { alert("Product added successfully!"); loadMerchantProducts(currentMerchantId); document.getElementById('productName').value = ''; document.getElementById('productPrice').value = ''; document.getElementById('productDescription').value = ''; document.getElementById('productPhotoPreview').style.display = 'none'; }
+        });
+
+        document.getElementById('storeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const business_name = document.getElementById('storeName').value;
+            const category = document.getElementById('storeCategory').value;
+            const description = document.getElementById('storeDescription').value;
+            const is_store_open = document.getElementById('storeStatus').checked;
+            const { error } = await supabaseClient.from('merchants').update({ business_name, category, description, is_store_open }).eq('id', currentMerchantId);
+            if (error) { alert("Error saving store: " + error.message); }
+            else { alert("Store saved successfully!"); }
+        });
+
+        function updateStoreStatus() {
+            const isOpen = document.getElementById('storeStatus').checked;
+            document.getElementById('storeStatusText').textContent = isOpen ? 'Open' : 'Closed';
+            document.getElementById('merchant-status-pill').textContent = isOpen ? '🟢 Open' : '🔴 Closed';
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const owner_name = document.getElementById('ownerName').value;
+            const email = document.getElementById('ownerEmail').value;
+            const phone = document.getElementById('ownerPhone').value;
+            const { error } = await supabaseClient.from('merchants').update({ owner_name, email, phone }).eq('id', currentMerchantId);
+            if (error) { alert("Error saving settings: " + error.message); }
+            else { alert("Settings saved successfully!"); }
+        });
+
+        // ===== RIDER FUNCTIONS =====
+        function showRiderTab(tabName) {
+            document.querySelectorAll('.rider-tab-content').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.rider-tab').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('rider-' + tabName + '-tab').style.display = 'block';
+            document.querySelector(`.rider-tab:nth-child(${['requests','active','deliveries','earnings','history','settings'].indexOf(tabName) + 1})`).classList.add('active');
+            if (tabName === 'requests') { loadRiderDeliveryRequests(); }
+            else if (tabName === 'active') { loadRiderActiveDeliveries(); }
+            else if (tabName === 'deliveries') { loadRiderDeliveries(); }
+            else if (tabName === 'earnings') { loadRiderEarnings(); }
+            else if (tabName === 'history') { loadRiderDeliveryHistory(); }
+        }
+
+        async function loadRiderDeliveryRequests() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('order_status', 'pending').order('id', { ascending: false });
+            if (error) { alert("Error loading orders: " + error.message); return; }
+            const groupedOrders = {};
+            orders.forEach(order => {
+                const restaurant = order.restaurant_name || 'Unknown Restaurant';
+                if (!groupedOrders[restaurant]) { groupedOrders[restaurant] = []; }
+                groupedOrders[restaurant].push(order);
+            });
+            const batchList = document.getElementById('rider-restaurant-batches');
+            batchList.innerHTML = '';
+            if (Object.keys(groupedOrders).length === 0) { batchList.innerHTML = '<p style="color:#767676;">No delivery requests right now.</p>'; return; }
+            Object.keys(groupedOrders).forEach(restaurant => {
+                const ordersForRestaurant = groupedOrders[restaurant];
+                const item = document.createElement('div');
+                item.className = 'restaurant-batch-card';
+                item.innerHTML = `<h3>${restaurant}</h3><p>Orders waiting: <strong>${ordersForRestaurant.length}</strong></p>`;
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'accept-batch-btn';
+                viewBtn.textContent = 'View Orders';
+                viewBtn.onclick = function() { viewRestaurantOrders(restaurant); };
+                item.appendChild(viewBtn);
+                batchList.appendChild(item);
+            });
+        }
+
+        async function viewRestaurantOrders(restaurant) {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('restaurant_name', restaurant).eq('order_status', 'pending').order('id', { ascending: false });
+            if (error) { alert("Error: " + error.message); return; }
+            const batchList = document.getElementById('rider-restaurant-batches');
+            batchList.innerHTML = '';
+
+            const backBtn = document.createElement('button');
+            backBtn.className = 'back-btn';
+            backBtn.textContent = '← Back to Restaurants';
+            backBtn.onclick = function() { loadRiderDeliveryRequests(); };
+            batchList.appendChild(backBtn);
+
+            const heading = document.createElement('div');
+            heading.className = 'section-title';
+            heading.style.marginTop = '10px';
+            heading.textContent = `${restaurant} — Orders`;
+            batchList.appendChild(heading);
+
+            if (!orders || orders.length === 0) {
+                const p = document.createElement('p');
+                p.style.color = '#767676';
+                p.textContent = 'These orders were just picked up by another rider.';
+                batchList.appendChild(p);
+                return;
+            }
+
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'delivery-item';
+                item.innerHTML = `<h4>Order #${order.id}</h4><p><strong>Deliver to:</strong> ${order.delivery_address}</p><p><strong>Items:</strong> ${order.items_ordered}</p><p style="color:#EB1700; font-weight:bold;">Total: ₦${order.total_price}</p>`;
+                const acceptBtn = document.createElement('button');
+                acceptBtn.className = 'accept-batch-btn';
+                acceptBtn.textContent = 'Accept This Order';
+                acceptBtn.onclick = function() { acceptSingleOrder(order.id, restaurant); };
+                item.appendChild(acceptBtn);
+                batchList.appendChild(item);
+            });
+        }
+
+        async function acceptSingleOrder(orderId, restaurant) {
+            const { data, error } = await supabaseClient.from('orders').update({ order_status: 'accepted', rider_id: currentRiderId }).eq('id', orderId).eq('order_status', 'pending').select();
+            if (error) { alert("Error: " + error.message); return; }
+            if (!data || data.length === 0) { alert("Sorry, another rider already took that order."); viewRestaurantOrders(restaurant); return; }
+            alert(`Order #${orderId} accepted!`);
+            showRiderTab('active');
+        }
+
+        async function loadRiderActiveDeliveries() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('rider_id', currentRiderId).neq('order_status', 'delivered');
+            if (error) { alert("Error: " + error.message); return; }
+            const activeList = document.getElementById('rider-active-deliveries');
+            activeList.innerHTML = '';
+            if (!orders || orders.length === 0) { activeList.innerHTML = '<p style="color:#767676;">No active deliveries.</p>'; return; }
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'delivery-item';
+                item.innerHTML = `<h4>Order #${order.id}</h4><p><strong>Pick up from:</strong> ${order.restaurant_name}</p><p><strong>Deliver to:</strong> ${order.delivery_address}</p><p><strong>Items:</strong> ${order.items_ordered}</p><p><strong>Status:</strong> ${order.order_status}</p>`;
+
+                const msgBtn = document.createElement('button');
+                msgBtn.className = 'btn btn-create';
+                msgBtn.style.marginTop = '10px';
+                msgBtn.textContent = '💬 Message Customer';
+                msgBtn.onclick = function() { openChatModal('rider', order.id, order.customer_id); };
+                item.appendChild(msgBtn);
+
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-buttons';
+                statusDiv.innerHTML = `<button class="status-btn btn-green" onclick="updateOrderStatus(${order.id}, 'on_my_way')">🛵 On my way</button><button class="status-btn btn-blue" onclick="updateOrderStatus(${order.id}, 'picked_up')">✅ Picked up</button><button class="status-btn btn-grey" onclick="updateOrderStatus(${order.id}, 'delivering')">📦 Heading to deliver</button><button class="status-btn btn-grey" onclick="updateOrderStatus(${order.id}, 'delivered')">✅ Delivered</button>`;
+                item.appendChild(statusDiv);
+
+                activeList.appendChild(item);
+            });
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            const { error } = await supabaseClient.from('orders').update({ order_status: status }).eq('id', orderId);
+            if (error) { alert("Error: " + error.message); return; }
+            if (status === 'delivered') {
+                await supabaseClient.from('rider_deliveries').insert([{ rider_id: currentRiderId, order_id: orderId, delivery_fee: 500, status: 'completed' }]);
+                alert(`Order #${orderId} marked as delivered! The customer will be asked to confirm receipt.`);
+                showRiderTab('deliveries');
+            } else {
+                alert(`Order #${orderId} marked as ${status.replace('_', ' ')}!`);
+                loadRiderActiveDeliveries();
+            }
+        }
+
+        async function loadRiderDeliveries() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('rider_id', currentRiderId).eq('order_status', 'delivered').eq('customer_confirmed', false);
+            if (error) { alert("Error: " + error.message); return; }
+            const deliveryList = document.getElementById('rider-completed-deliveries');
+            deliveryList.innerHTML = '';
+            if (!orders || orders.length === 0) { deliveryList.innerHTML = '<p style="color:#767676;">No pending confirmations. All delivered orders have been confirmed!</p>'; return; }
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'delivery-item';
+                item.innerHTML = `<h4>Order #${order.id}</h4><p><strong>Items:</strong> ${order.items_ordered}</p><p><strong>Status:</strong> ✅ Delivered (waiting for customer confirmation)</p>`;
+                deliveryList.appendChild(item);
+            });
+        }
+
+        async function loadRiderEarnings() {
+            const { data: deliveries, error } = await supabaseClient.from('rider_deliveries').select('*').eq('rider_id', currentRiderId).eq('status', 'completed');
+            if (error) { alert("Error: " + error.message); return; }
+            
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            let total = 0, week = 0, month = 0;
+            deliveries.forEach(delivery => {
+                const fee = Number(delivery.delivery_fee) || 0;
+                total += fee;
+                const date = new Date(delivery.created_at);
+                if (date >= startOfWeek) week += fee;
+                if (date >= startOfMonth) month += fee;
+            });
+            
+            document.getElementById('rider-total-earnings').textContent = '₦' + total;
+            document.getElementById('rider-this-week').textContent = '₦' + week;
+            document.getElementById('rider-this-month').textContent = '₦' + month;
+            document.getElementById('rider-available').textContent = '₦' + total;
+        }
+
+        async function loadRiderDeliveryHistory() {
+            const { data: orders, error } = await supabaseClient.from('orders').select('*').eq('rider_id', currentRiderId).eq('order_status', 'delivered').eq('customer_confirmed', true).order('id', { ascending: false });
+            if (error) { alert("Error: " + error.message); return; }
+            const historyList = document.getElementById('rider-delivery-history');
+            historyList.innerHTML = '';
+            if (!orders || orders.length === 0) { historyList.innerHTML = '<p style="color:#767676;">No completed orders yet (customers have not confirmed any).</p>'; return; }
+            orders.forEach(order => {
+                const item = document.createElement('div');
+                item.className = 'delivery-item';
+                item.innerHTML = `<h4>Order #${order.id} — ${order.restaurant_name || ''}</h4><p><strong>Deliver to:</strong> ${order.delivery_address}</p><p><strong>Items:</strong> ${order.items_ordered}</p><p><strong>Status:</strong> ✅ Completed (confirmed)</p>`;
+                historyList.appendChild(item);
+            });
+        }
+
+        document.getElementById('riderSettingsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const full_name = document.getElementById('riderNameInput').value;
+            const email = document.getElementById('riderEmailInput').value;
+            const phone = document.getElementById('riderPhoneInput').value;
+            const { error } = await supabaseClient.from('riders').update({ full_name, email, phone }).eq('id', currentRiderId);
+            if (error) { alert("Error: " + error.message); }
+            else { alert("Settings saved!"); }
+        });
+
+        // ===== WHATSAPP-STYLE CHAT MODAL =====
+        let chatPollInterval = null;
+        let currentChatRole = null;
+        let currentChatOtherPartyId = null;
+
+        function openChatModal(role, orderId, otherPartyId) {
+            if (!otherPartyId) { alert("No rider assigned to this order yet."); return; }
+            currentChatRole = role;
+            currentChatOrderId = orderId;
+            currentChatOtherPartyId = otherPartyId;
+            if (role === 'customer') {
+                currentChatCustomerId = currentCustomerId;
+            } else {
+                currentChatCustomerId = otherPartyId;
+            }
+            document.getElementById('chat-modal-title').textContent = role === 'customer' ? 'Chat with your Rider' : 'Chat with Customer';
+            document.getElementById('chat-modal-overlay').classList.add('open');
+            loadChatModalMessages();
+            if (chatPollInterval) clearInterval(chatPollInterval);
+            chatPollInterval = setInterval(loadChatModalMessages, 4000);
+        }
+
+        function closeChatModal() {
+            document.getElementById('chat-modal-overlay').classList.remove('open');
+            if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+        }
+
+        async function loadChatModalMessages() {
+            const riderId = currentChatRole === 'customer' ? currentChatOtherPartyId : currentRiderId;
+            const custId = currentChatRole === 'customer' ? currentCustomerId : currentChatOtherPartyId;
+            const { data: messages, error } = await supabaseClient.from('messages').select('*').eq('customer_id', custId).eq('rider_id', riderId).order('id', { ascending: true });
+            if (error) { return; }
+            const box = document.getElementById('chat-modal-messages');
+            box.innerHTML = '';
+            (messages || []).forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-message ' + (msg.sender === 'customer' ? 'customer' : 'rider');
+                bubble.textContent = msg.message;
+                box.appendChild(bubble);
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendChatModalMessage() {
+            const input = document.getElementById('chat-modal-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const riderId = currentChatRole === 'customer' ? currentChatOtherPartyId : currentRiderId;
+            const custId = currentChatRole === 'customer' ? currentCustomerId : currentChatOtherPartyId;
+            const { error } = await supabaseClient.from('messages').insert([
+                { customer_id: custId, rider_id: riderId, message: text, sender: currentChatRole }
+            ]);
+            if (error) { alert("Error sending message: " + error.message); return; }
+            input.value = '';
+            loadChatModalMessages();
+        }
+
+        function show(screenId) { document.querySelectorAll('.landing-container').forEach(div => div.style.display = 'none'); document.getElementById(screenId).style.display = 'block'; }
+        function showRoleSelection() { show('role-selection'); }
+        function showLanding() { show('landing-page'); }
+        function showLogin() { show('login-page'); }
+        function showAdminLogin() { show('admin-login'); }
+        function showCustomerSignup() { show('customer-signup'); }
+        function showMerchantSignup() { show('merchant-signup'); }
+        function showRiderSignup() { show('rider-signup'); }
+    </script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-workers.js')
+                    .then(() => console.log('Service Worker registered ✅'))
+                    .catch(err => console.log('Service Worker error:', err));
+            });
+        }
+    </script>
+</body>
+</html>
