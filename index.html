@@ -6,12 +6,14 @@
     <title>Daash</title>
 
     <!-- PWA -->
-    <link rel="manifest" href="manifest.json" />
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-    <meta name="theme-color" content="#EB1700" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Daash" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#EB1700">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Daash">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -19,6 +21,22 @@
             'https://apdtibeqntvvcpdswwaa.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZHRpYmVxbnR2dmNwZHN3d2FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4ODkwODYsImV4cCI6MjEwNDQ2NTA4Nn0.rYNjgZsIppF4L5Q5FqUmzQdYn1xTWhu-k3kc2W_v0s0'
         );
+    </script>
+
+    <!-- Firebase Cloud Messaging (push notifications) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTkFMjAq7FlYLDGR4-atGSej_Wvud3VsU",
+            authDomain: "daash-be383.firebaseapp.com",
+            projectId: "daash-be383",
+            storageBucket: "daash-be383.firebasestorage.app",
+            messagingSenderId: "424694465239",
+            appId: "1:424694465239:web:3f66e6b3980cda3599a692"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const DAASH_VAPID_KEY = "BFrVnnwLkeH_GhHQhVP7vJSwrVfBHAcji5TKMyntPpcNrg4afTfcdqUKOHjhnFaupL-EcaVbEg6mU248KX8OvRI";
     </script>
 
     <style>
@@ -191,6 +209,7 @@
         <div class="tagline">University food delivered to your doorstep.</div>
         <button class="btn btn-create" onclick="showRoleSelection()">Create Account</button>
         <button class="btn btn-login" onclick="showLogin()">Login</button>
+        <button id="install-app-btn" class="btn btn-login" style="display:none; margin-top:10px;" onclick="installApp()">📲 Install Daash App</button>
     </div>
 
     <!-- SCREEN 2: ROLE SELECTION -->
@@ -742,16 +761,16 @@
                 const { data, error } = await supabaseClient.from('merchants').select('*').eq('email', email).eq('password', password).single();
                 if (error || !data) { alert("Invalid email or password!"); }
                 else if (data.status === 'pending') { alert("Account still pending approval!"); }
-                else { currentMerchantId = data.id; loadMerchantData(data); show('merchant-dashboard'); }
+                else { currentMerchantId = data.id; loadMerchantData(data); show('merchant-dashboard'); registerPushForUser('merchant', data.id); }
             } else if (currentLoginRole === 'Customer') {
                 const { data, error } = await supabaseClient.from('customers').select('*').eq('email', email).eq('password', password).single();
                 if (error || !data) { alert("Invalid email or password!"); }
-                else { currentCustomerId = data.id; currentCustomerSchool = data.university; document.getElementById('customerSchoolText').textContent = currentCustomerSchool; loadCustomerRestaurants(); loadCustomerOrders(); loadCustomerHistory(); loadCustomerFavorites(); loadCustomerNotifications(); loadCustomerProfile(data); show('customer-dashboard'); }
+                else { currentCustomerId = data.id; currentCustomerSchool = data.university; document.getElementById('customerSchoolText').textContent = currentCustomerSchool; loadCustomerRestaurants(); loadCustomerOrders(); loadCustomerHistory(); loadCustomerFavorites(); loadCustomerNotifications(); loadCustomerProfile(data); show('customer-dashboard'); registerPushForUser('customer', data.id); }
             } else if (currentLoginRole === 'Rider') {
                 const { data, error } = await supabaseClient.from('riders').select('*').eq('email', email).eq('password', password).single();
                 if (error || !data) { alert("Invalid email or password!"); }
                 else if (data.status === 'pending') { alert("Account still pending approval!"); }
-                else { currentRiderId = data.id; loadRiderDeliveryRequests(); loadRiderActiveDeliveries(); loadRiderDeliveries(); loadRiderEarnings(); loadRiderDeliveryHistory(); show('rider-dashboard'); }
+                else { currentRiderId = data.id; loadRiderDeliveryRequests(); loadRiderActiveDeliveries(); loadRiderDeliveries(); loadRiderEarnings(); loadRiderDeliveryHistory(); show('rider-dashboard'); registerPushForUser('rider', data.id); }
             }
         });
 
@@ -1493,17 +1512,82 @@
         function showCustomerSignup() { show('customer-signup'); }
         function showMerchantSignup() { show('merchant-signup'); }
         function showRiderSignup() { show('rider-signup'); }
-    </script>
 
-    <!-- PWA Service Worker Registration -->
-    <script>
+        // ===== PWA: service worker + install prompt =====
+        let swRegistration = null;
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-workers.js')
-                    .then(() => console.log('Service Worker registered ✅'))
-                    .catch(err => console.log('Service Worker error:', err));
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => { swRegistration = reg; })
+                    .catch(err => console.warn('SW registration failed:', err));
             });
         }
+
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const btn = document.getElementById('install-app-btn');
+            if (btn) btn.style.display = 'block';
+        });
+
+        function installApp() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(() => {
+                deferredInstallPrompt = null;
+                document.getElementById('install-app-btn').style.display = 'none';
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            const btn = document.getElementById('install-app-btn');
+            if (btn) btn.style.display = 'none';
+        });
+
+        // ===== PUSH NOTIFICATIONS (Firebase Cloud Messaging) =====
+        // Call this right after a successful login for any role. It asks permission,
+        // gets a device token from FCM, and saves it in Supabase so we know where to
+        // send that user's notifications.
+        async function registerPushForUser(role, userId) {
+            try {
+                if (!('Notification' in window)) return;
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') { return; }
+
+                // Wait for the service worker to be ready (it may not have finished
+                // registering yet if this runs right after page load).
+                const registration = swRegistration || await navigator.serviceWorker.ready;
+
+                const messaging = firebase.messaging();
+                const token = await messaging.getToken({
+                    vapidKey: DAASH_VAPID_KEY,
+                    serviceWorkerRegistration: registration
+                });
+                if (!token) return;
+
+                // One row per (role, userId) — update the token if it already exists,
+                // insert a new row otherwise. Requires a unique constraint on (role, user_id)
+                // in the fcm_tokens table (see setup SQL).
+                const { error } = await supabaseClient.from('fcm_tokens').upsert(
+                    { role: role, user_id: userId, token: token },
+                    { onConflict: 'role,user_id' }
+                );
+                if (error) { console.warn('Could not save push token:', error.message); }
+
+                // Handle notifications that arrive while the app is open and in the foreground.
+                messaging.onMessage((payload) => {
+                    const title = payload.notification?.title || 'Daash';
+                    const body = payload.notification?.body || '';
+                    if (Notification.permission === 'granted') {
+                        new Notification(title, { body, icon: 'icons/icon-192.png' });
+                    }
+                });
+            } catch (err) {
+                console.warn('Push registration failed:', err);
+            }
+        }
     </script>
+
 </body>
 </html>
