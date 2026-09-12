@@ -1,42 +1,47 @@
-const CACHE_NAME = 'daash-v1';
-const ASSETS = [
+// Daash service worker — caches the app shell so it opens instantly and
+// works offline, and satisfies the "installable PWA" requirement.
+const CACHE_NAME = 'daash-cache-v1';
+const APP_SHELL = [
   './',
-  './index.html',
+  './daash.html',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-192.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-512.png'
 ];
 
-// Install — cache the app shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch — serve from cache, fallback to network
+// Network-first for everything so logged-in users always get fresh order/menu
+// data from Supabase; falls back to the cached app shell when offline.
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() => caches.match('./index.html'))
-      );
-    })
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          // Only cache same-origin app-shell files, not Supabase API calls.
+          if (event.request.url.startsWith(self.location.origin)) {
+            cache.put(event.request, copy);
+          }
+        });
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./daash.html')))
   );
 });
